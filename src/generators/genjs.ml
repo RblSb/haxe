@@ -950,7 +950,10 @@ and gen_function ?(keyword="function") ctx f pos =
 		| _ ->
 			f, mk_non_rest_arg_names f.tf_args
 	in
-	print ctx "%s(%s) " keyword (String.concat "," args);
+	if ctx.es_version >= 6 && keyword == "function" then
+		print ctx "(%s) %s " (String.concat "," args) "=>"
+	else
+		print ctx "%s(%s) " keyword (String.concat "," args);
 	gen_expr ctx (fun_block ctx f pos);
 	ctx.in_value <- fst old;
 	ctx.in_loop <- snd old;

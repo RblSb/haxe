@@ -189,6 +189,8 @@ type platform_config = {
 	pf_exceptions : exceptions_config;
 	(** the scoping of local variables *)
 	pf_scoping : var_scoping_config;
+	(** whether or not the target needs a variable to capture `this` *)
+	pf_can_capture_this : bool;
 }
 
 class compiler_callbacks = object(self)
@@ -478,7 +480,8 @@ let default_config =
 		pf_scoping = {
 			vs_scope = BlockScope;
 			vs_flags = [];
-		}
+		};
+		pf_can_capture_this = true;
 	}
 
 let get_config com =
@@ -509,7 +512,8 @@ let get_config com =
 				vs_flags =
 					(if defined Define.JsUnflatten then ReserveAllTopLevelSymbols else ReserveAllTypesFlat)
 					:: if es6 then [NoShadowing; SwitchCasesNoBlocks;] else [VarHoisting; NoCatchVarShadowing];
-			}
+			};
+			pf_can_capture_this = es6;
 		}
 	| Lua ->
 		{
@@ -671,6 +675,7 @@ let get_config com =
 				vs_scope = FunctionScope;
 				vs_flags = [VarHoisting]
 			};
+			pf_can_capture_this = false;
 		}
 	| Hl ->
 		{
@@ -687,6 +692,7 @@ let get_config com =
 			pf_uses_utf16 = false;
 			pf_supports_threads = true;
 			pf_capture_policy = CPWrapRef;
+			pf_can_capture_this = false;
 		}
 
 let memory_marker = [|Unix.time()|]
