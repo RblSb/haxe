@@ -41,7 +41,7 @@ extern class Object {
 	/**
 		Creates a new object with the specified prototype object and properties.
 	**/
-	@:pure static function create<T>(proto:{}, ?propertiesObject:DynamicAccess<ObjectPropertyDescriptor>):T;
+	@:pure static function create<T>(proto:Null<{}>, ?propertiesObject:DynamicAccess<ObjectPropertyDescriptor>):T;
 
 	/**
 		Adds the named properties described by the given descriptors to an object.
