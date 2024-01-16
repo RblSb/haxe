@@ -579,7 +579,7 @@ jobs:
           path: out/linux/arm64
 
   mac-build:
-    runs-on: macos-latest
+    runs-on: flyci-macos-large-latest-m1
     env:
       PLATFORM: mac
       OPAMYES: 1
