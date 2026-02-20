@@ -1785,30 +1785,36 @@ and type_expr ?(mode=MGet) ctx (e,p) (with_type:WithType.t) =
 	| EConst c ->
 		Texpr.type_constant ctx.com.basic c p
 	| EBinop (OpNullCoal,e1,e2) ->
-		let vr = new value_reference ctx in
 		let e1 = type_expr ctx (Expr.ensure_block e1) WithType.value in
-		let e2 = type_expr ctx (Expr.ensure_block e2) (WithType.with_type e1.etype) in
-		let tmin,cast = get_if_then_else_operands ctx e1 e2 with_type in
-		let e2 = cast e2 in
-		let iftype = if DeadEnd.has_dead_end e2 then
-			follow_without_type e1.etype
-		else match e2.etype with
-			| TAbstract({a_path = [],"Null"},[t]) -> tmin
-			| _ -> follow_without_type tmin
-		in
-		let var_name = match WithType.get_expected_name with_type with
-			| None
-			(* TODO: why does this happen? *)
-			| Some "" ->
-				"tmp"
-			| Some name ->
-				name
-		in
-		let e1 = vr#as_var var_name e1 in
-		let e_null = Builder.make_null e1.etype e1.epos in
-		let e_cond = mk (TBinop(OpNotEq,e1,e_null)) ctx.t.tbool e1.epos in
-		let e_if = mk (TIf(e_cond,cast e1,Some e2)) iftype p in
-		vr#to_texpr e_if
+		if ctx.com.config.pf_static && not (is_nullable e1.etype) then begin
+			let tail_p = {(snd e2) with pmin = e1.epos.pmax} in
+			display_error ctx.com "The left operand is non-nullable, so the right operand is never executed" tail_p;
+			e1
+		end else begin
+			let vr = new value_reference ctx in
+			let e2 = type_expr ctx (Expr.ensure_block e2) (WithType.with_type e1.etype) in
+			let tmin,cast = get_if_then_else_operands ctx e1 e2 with_type in
+			let e2 = cast e2 in
+			let iftype = if DeadEnd.has_dead_end e2 then
+				follow_without_type e1.etype
+			else match e2.etype with
+				| TAbstract({a_path = [],"Null"},[t]) -> tmin
+				| _ -> follow_without_type tmin
+			in
+			let var_name = match WithType.get_expected_name with_type with
+				| None
+				(* TODO: why does this happen? *)
+				| Some "" ->
+					"tmp"
+				| Some name ->
+					name
+			in
+			let e1 = vr#as_var var_name e1 in
+			let e_null = Builder.make_null e1.etype e1.epos in
+			let e_cond = mk (TBinop(OpNotEq,e1,e_null)) ctx.t.tbool e1.epos in
+			let e_if = mk (TIf(e_cond,cast e1,Some e2)) iftype p in
+			vr#to_texpr e_if
+		end
 	| EBinop (OpAssignOp OpNullCoal,e1,e2) ->
 		type_op_null_coal_assign ctx e1 e2 with_type p
 	| EBinop (op,e1,e2) ->

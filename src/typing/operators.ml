@@ -806,18 +806,24 @@ let type_assign_op ctx op e1 e2 with_type p =
 let type_op_null_coal_assign ctx e1 e2 with_type p =
 	let hack = ref (fun e -> e) in
 	let gen vr e1 t2 e_assign =
-		let e1,eelse,tif = match with_type with
-			| WithType.NoValue ->
-				e1,None,ctx.t.tvoid
-			| _ ->
-				let e1 = vr#as_var "tmp" e1 in
-				let t = if is_nullable t2 then e1.etype else follow_without_type e1.etype in
-				e1,Some e1,t
-		in
-		let e_null = Texpr.Builder.make_null e1.etype e1.epos in
-		let e_null = Texpr.Builder.binop OpEq e1 e_null ctx.t.tbool e1.epos in
-		let e = mk (TIf(e_null,e_assign,eelse)) tif e1.epos in
-		vr#to_texpr e
+		if ctx.com.config.pf_static && not (is_nullable e1.etype) then begin
+			let tail_p = {(snd e2) with pmin = e1.epos.pmax} in
+			Common.display_error ctx.com "The left operand is non-nullable, so the right operand is never executed" tail_p;
+			e1
+		end else begin
+			let e1,eelse,tif = match with_type with
+				| WithType.NoValue ->
+					e1,None,ctx.t.tvoid
+				| _ ->
+					let e1 = vr#as_var "tmp" e1 in
+					let t = if is_nullable t2 then e1.etype else follow_without_type e1.etype in
+					e1,Some e1,t
+			in
+			let e_null = Texpr.Builder.make_null e1.etype e1.epos in
+			let e_null = Texpr.Builder.binop OpEq e1 e_null ctx.t.tbool e1.epos in
+			let e = mk (TIf(e_null,e_assign,eelse)) tif e1.epos in
+			vr#to_texpr e
+		end
 	in
 	let api = {
 		akno_fallback = (fun () ->
