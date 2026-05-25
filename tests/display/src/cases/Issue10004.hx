@@ -18,7 +18,7 @@ class Issue10004 extends DisplayTestCase {
 	**/
 	function testGama() {
 		var fields = fields(pos(1));
-		eq(true, hasField(fields, "foo", "() -> Void"));
+		eq(true, hasField(fields, "foo2", "() -> Void"));
 	}
 
 	/**
