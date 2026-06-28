@@ -27,7 +27,7 @@ class Issue9318 extends DisplayTestCase {
 	function test(_) {
 		var args = ["Main", "-js", "main.js"];
 		Assert.same([range(1, 2)], runHaxeJson(args, DisplayMethods.GotoDefinition, {file: file, offset: offset(7), contents: source}).map(result -> result.range));
-		// Assert.same([range(3, 4)], runHaxeJson(args, DisplayMethods.GotoDefinition, {file: file, offset: offset(8), contents: source}).map(result -> result.range));
+		Assert.same([range(3, 4)], runHaxeJson(args, DisplayMethods.GotoDefinition, {file: file, offset: offset(8), contents: source}).map(result -> result.range));
 		Assert.same([range(5, 6)], runHaxeJson(args, DisplayMethods.GotoDefinition, {file: file, offset: offset(9), contents: source}).map(result -> result.range));
 	}
 }
